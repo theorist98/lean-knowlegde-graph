@@ -4,7 +4,7 @@ An interactive 3D visualization of compiled Lean 4 mathematical theorems, struct
 
 ## 🌐 Live Demo
 
-**[View the Interactive 3D Graph](https://your-username.github.io/PSI/)**
+**[View the Interactive 3D Graph](https://theorist98.github.io/lean-knowlegde-graph/)**
 
 ## ✨ Features
 
@@ -42,10 +42,10 @@ This visualization showcases the intersection of AI and formal mathematics:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-username/PSI.git
+git clone https://github.com/theorist98/lean-knowlegde-graph.git
 
 # Start local server
-cd PSI
+cd lean-knowlegde-graph
 npx http-server . -p 8000
 
 # Visit http://localhost:8000
