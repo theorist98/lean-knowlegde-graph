@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    {"data": {"id": "Q0", "label": "What is the definition of a group in abstract algebra?"}},
+    {"data": {"id": "Q1", "label": "How do cyclic groups differ from abelian groups?"}},
+    {"data": {"id": "Q2", "label": "What is the significance of Lagrange's theorem in group theory?"}},
+    {"data": {"id": "Q3", "label": "How are cosets defined, and why are they important?"}},
+    {"data": {"id": "Q4", "label": "What is the principle of least action in physics?"}},
+    {"data": {"id": "Q5", "label": "How does the Navier–Stokes equation describe fluid motion?"}},
+    {"data": {"id": "Q6", "label": "What is the difference between laminar and turbulent flow?"}},
+    {"data": {"id": "Q7", "label": "What is the Bolzano–Weierstrass theorem, and why is it important?"}},
+    {"data": {"id": "Q8", "label": "How does renormalization solve infinities in quantum field theory?"}},
+    {"data": {"id": "Q9", "label": "What is the holographic principle in theoretical physics?"}}
+  ],
+  "edges": [
+    {"data": {"source": "Q0", "target": "Q1", "weight": 0.8}},
+    {"data": {"source": "Q0", "target": "Q2", "weight": 0.7}},
+    {"data": {"source": "Q1", "target": "Q3", "weight": 0.6}},
+    {"data": {"source": "Q2", "target": "Q3", "weight": 0.75}},
+    {"data": {"source": "Q4", "target": "Q5", "weight": 0.65}},
+    {"data": {"source": "Q5", "target": "Q6", "weight": 0.9}},
+    {"data": {"source": "Q8", "target": "Q9", "weight": 0.7}}
+  ]
+}
