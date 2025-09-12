@@ -259,7 +259,7 @@
                     
                     // Connect nodes from same agent type with higher probability
                     const sameAgent = nodeA.agent === nodeB.agent;
-                    const shouldConnect = sameAgent ? Math.random() < 0.4 : Math.random() < 0.1;
+                    const shouldConnect = sameAgent ? Math.random() < 0.3 : Math.random() < 0.05;
                     
                     if (shouldConnect) {
                         const edge = {
@@ -287,6 +287,18 @@
             }
 
             console.log(`Created graph with ${nodes.length} nodes and ${edges.length} edges`);
+        }
+
+        function createSampleGraph() {
+            // Fallback sample data if JSON loading fails
+            const sampleData = [
+                { natural_language_question: "What is a simple probability measure?", agent: "MeasureTheory-Agent", lean_code: "structure SimpleProbability where\n  outcomes : Nat\n  favorable : Nat" },
+                { natural_language_question: "What is a linear transformation?", agent: "Analysis-Agent", lean_code: "structure LinearMap where\n  domain : List Nat\n  codomain : List Nat" },
+                { natural_language_question: "What is a dynamical system iteration?", agent: "Dynamics-Agent", lean_code: "def iterate (f : Nat → Nat) (x : Nat) (n : Nat) : Nat := sorry" }
+            ];
+            
+            leanData = sampleData;
+            createGraphFromLeanData();
         }
 
         // Physics simulation
