@@ -272,10 +272,14 @@
             }
             
             console.log('Final dataset has ' + leanData.length + ' total entries');
+            console.log('First few entries:', leanData.slice(0, 3));
+            console.log('Last few entries:', leanData.slice(-3));
             createGraphFromLeanData();
         }
 
         function createGraphFromLeanData() {
+            console.log('Starting graph creation with', leanData.length, 'entries');
+            
             // Clear existing data
             nodes.length = 0;
             nodeObjects.forEach(obj => scene.remove(obj));
@@ -285,6 +289,7 @@
 
             // Create nodes from Lean data
             leanData.forEach((entry, index) => {
+                console.log('Processing entry', index, ':', entry.agent);
                 const node = {
                     id: `lean_${index}`,
                     label: entry.natural_language_question,
