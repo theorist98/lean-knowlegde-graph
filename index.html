@@ -260,7 +260,9 @@
                     "lean_code": "structure RadioactiveDecay where\n  halfLife : Nat\n  initialAmount : Nat\ndef decayAmount (rd : RadioactiveDecay) (time : Nat) : Nat := rd.initialAmount / (2 ^ (time / rd.halfLife))\ntheorem decay_at_zero : decayAmount ⟨10, 100⟩ 0 = 100 := by rfl"
                 }
             ];
-            leanData = leanData ++ newAgentSamples;
+            leanData = leanData.concat(newAgentSamples);
+            console.log(`Final dataset has ${leanData.length} entries`);
+            console.log('Agent types in dataset:', [...new Set(leanData.map(entry => entry.agent))]);
             createGraphFromLeanData();
         }
 
@@ -290,20 +292,28 @@
 
                 // Create visual node with color based on agent type
                 let color;
+                console.log(`Processing agent: ${entry.agent}`);
                 if (entry.agent.includes('MeasureTheory')) {
                     color = 0x2196f3; // Blue
+                    console.log('Assigned blue color');
                 } else if (entry.agent.includes('Analysis')) {
                     color = 0x4caf50; // Green
+                    console.log('Assigned green color');
                 } else if (entry.agent.includes('Dynamics')) {
                     color = 0x9c27b0; // Purple
+                    console.log('Assigned purple color');
                 } else if (entry.agent.includes('Stochastic')) {
                     color = 0xffeb3b; // Yellow
-                } else if (entry.agent.includes('Fluid')) {
+                    console.log('Assigned yellow color');
+                } else if (entry.agent.includes('FluidDynamics') || entry.agent.includes('Fluid')) {
                     color = 0xff9800; // Orange
-                } else if (entry.agent.includes('Nuclear')) {
+                    console.log('Assigned orange color');
+                } else if (entry.agent.includes('NuclearPhysics') || entry.agent.includes('Nuclear')) {
                     color = 0xf44336; // Red
+                    console.log('Assigned red color');
                 } else {
                     color = 0x607d8b; // Blue Grey
+                    console.log('Assigned default grey color');
                 }
 
                 const geometry = new THREE.SphereGeometry(0.8, 16, 16);
