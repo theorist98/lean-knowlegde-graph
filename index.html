@@ -192,11 +192,11 @@
         // Load Lean data
         async function loadLeanData() {
             try {
-                const response = await fetch('./game_results/extracted_lean_questions.json');
+                const response = await fetch('./public/extracted_lean_questions.json');
                 leanData = await response.json();
                 console.log(`Loaded ${leanData.length} Lean code entries from file`);
             } catch (error) {
-                console.log('Loading from embedded data');
+                console.log('Failed to load from public folder, trying embedded data');
                 leanData = embeddedLeanData;
             }
             createGraphFromLeanData();
