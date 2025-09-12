@@ -232,36 +232,46 @@
         async function loadLeanData() {
             try {
                 const response = await fetch('./game_results/extracted_lean_questions.json');
-                leanData = await response.json();
-                console.log(`Loaded ${leanData.length} Lean code entries from file`);
+                if (response.ok) {
+                    leanData = await response.json();
+                    console.log('Loaded ' + leanData.length + ' Lean code entries from JSON file');
+                } else {
+                    throw new Error('Failed to fetch JSON file');
+                }
             } catch (error) {
-                console.log('Failed to load from public folder, trying embedded data');
+                console.log('Failed to load JSON, using embedded data:', error.message);
                 leanData = embeddedLeanData;
+                console.log('Using ' + leanData.length + ' embedded entries');
             }
             
             // Always add sample entries for new agent types to demonstrate legend
-            const newAgentSamples = [
+            var newAgentSamples = [
                 {
                     "agent": "Stochastic-Agent",
                     "session_timestamp": "2025-09-12 23:25:00",
                     "natural_language_question": "What is a basic stochastic process theorem?",
-                    "lean_code": "structure RandomWalk where\n  steps : List Int\n  probability : Nat → Nat\ndef walkStep (rw : RandomWalk) (n : Nat) : Int := rw.steps.get? n |>.getD 0\ntheorem walk_starts_zero : walkStep ⟨[0, 1, -1, 2], fun _ => 1⟩ 0 = 0 := by rfl"
+                    "lean_code": "structure RandomWalk where\\n  steps : List Int\\n  probability : Nat → Nat\\ndef walkStep (rw : RandomWalk) (n : Nat) : Int := rw.steps.get? n |>.getD 0\\ntheorem walk_starts_zero : walkStep ⟨[0, 1, -1, 2], fun _ => 1⟩ 0 = 0 := by rfl"
                 },
                 {
                     "agent": "FluidDynamics-Agent", 
                     "session_timestamp": "2025-09-12 23:25:00",
                     "natural_language_question": "What is a fluid flow conservation theorem?",
-                    "lean_code": "structure FluidFlow where\n  velocity : List Nat\n  density : Nat\ndef massFlow (f : FluidFlow) : Nat := f.density * f.velocity.sum\ntheorem conservation_example : massFlow ⟨[1, 2, 3], 2⟩ = 12 := by rfl"
+                    "lean_code": "structure FluidFlow where\\n  velocity : List Nat\\n  density : Nat\\ndef massFlow (f : FluidFlow) : Nat := f.density * f.velocity.sum\\ntheorem conservation_example : massFlow ⟨[1, 2, 3], 2⟩ = 12 := by rfl"
                 },
                 {
                     "agent": "NuclearPhysics-Agent",
                     "session_timestamp": "2025-09-12 23:25:00", 
                     "natural_language_question": "What is a nuclear decay theorem?",
-                    "lean_code": "structure RadioactiveDecay where\n  halfLife : Nat\n  initialAmount : Nat\ndef decayAmount (rd : RadioactiveDecay) (time : Nat) : Nat := rd.initialAmount / (2 ^ (time / rd.halfLife))\ntheorem decay_at_zero : decayAmount ⟨10, 100⟩ 0 = 100 := by rfl"
+                    "lean_code": "structure RadioactiveDecay where\\n  halfLife : Nat\\n  initialAmount : Nat\\ndef decayAmount (rd : RadioactiveDecay) (time : Nat) : Nat := rd.initialAmount / (2 ^ (time / rd.halfLife))\\ntheorem decay_at_zero : decayAmount ⟨10, 100⟩ 0 = 100 := by rfl"
                 }
             ];
-            leanData = leanData.concat(newAgentSamples);
-            console.log('Final dataset has ' + leanData.length + ' entries');
+            
+            // Add new agent samples to existing data
+            for (var i = 0; i < newAgentSamples.length; i++) {
+                leanData.push(newAgentSamples[i]);
+            }
+            
+            console.log('Final dataset has ' + leanData.length + ' total entries');
             createGraphFromLeanData();
         }
 
