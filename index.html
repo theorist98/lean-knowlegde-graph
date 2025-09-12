@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Lean Code Graph - Interactive</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            overflow: hidden;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        #container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 100;
+            max-width: 300px;
+        }
+        #tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+            font-size: 12px;
+            max-width: 300px;
+            display: none;
+            z-index: 1000;
+            border: 1px solid #444;
+        }
+        #code-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 20, 0.95);
+            color: #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            max-width: 80vw;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+            z-index: 2000;
+            border: 2px solid #555;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #code-modal pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border: 1px solid #333;
+        }
+        #close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+        }
+        #close-modal:hover {
+            color: #ff6b6b;
+        }
+        .modal-title {
+            color: #4fc3f7;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .agent-type {
+            color: #81c784;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <div id="info">
+        <strong>3D Lean Code Knowledge Graph</strong><br>
+        Generated from compiled Lean theorem proofs<br><br>
+        <strong>Controls:</strong><br>
+        🖱️ Mouse: Rotate view<br>
+        🎡 Wheel: Zoom<br>
+        👆 Hover: View question<br>
+        🖱️ Click: Show Lean code<br><br>
+        <strong>Legend:</strong><br>
+        🟦 Measure Theory<br>
+        🟩 Functional Analysis<br>
+        🟪 Dynamical Systems
+    </div>
+    <div id="tooltip"></div>
+    <div id="code-modal">
+        <button id="close-modal">&times;</button>
+        <div id="modal-content"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('container').appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        // Global variables
+        const nodes = [];
+        const edges = [];
+        const nodeObjects = [];
+        const edgeObjects = [];
+        let leanData = [];
+
+        // Embedded Lean data (from extracted_lean_questions.json)
+        const embeddedLeanData = [
+            {
+                "agent": "MeasureTheory-Agent",
+                "session_timestamp": "2025-09-09 09:34:54",
+                "natural_language_question": "What is the measure theory theorem event_prob_example?",
+                "lean_code": "structure SimpleEvent where\n  total_outcomes : Nat\n  successful_outcomes : Nat\ndef event_probability (e : SimpleEvent) : Nat × Nat := (e.successful_outcomes, e.total_outcomes)\ntheorem event_prob_example : event_probability ⟨15, 8⟩ = (8, 15) := by rfl"
+            },
+            {
+                "agent": "Analysis-Agent", 
+                "session_timestamp": "2025-09-09 09:34:54",
+                "natural_language_question": "What is the functional analysis theorem map_additivity?",
+                "lean_code": "structure LinearMap where  \n  source : List Nat  \n  target : List Nat  \ndef map (f : LinearMap) (v : List Nat) : List Nat := v\ntheorem map_additivity (f : LinearMap) (u v : List Nat) : map f (u ++ v) = map f u ++ map f v := by rfl"
+            },
+            {
+                "agent": "Dynamics-Agent",
+                "session_timestamp": "2025-09-09 09:34:54", 
+                "natural_language_question": "What is the dynamical systems theorem iterate_cycle_zero?",
+                "lean_code": "structure CyclicMap where\n  cycle_length : Nat\n  cycle_shift : Nat\ndef apply_cycle (cm : CyclicMap) (x : Nat) : Nat := (x + cm.cycle_shift) % (if cm.cycle_length = 0 then 1 else cm.cycle_length)\ntheorem iterate_cycle_zero (cm : CyclicMap) (x : Nat) : apply_cycle cm (apply_cycle cm x) = apply_cycle cm (apply_cycle cm x) := by rfl"
+            },
+            {
+                "agent": "MeasureTheory-Agent",
+                "session_timestamp": "2025-09-09 09:41:38",
+                "natural_language_question": "What is the ProbabilitySpace structure in measure theory?",
+                "lean_code": "structure ProbabilitySpace where\n  outcomes : List Nat\n  weights : List Nat\ndef prob_weight (ps : ProbabilitySpace) : Nat := ps.weights.foldl (· + ·) 0\ntheorem weight_positive (ps : ProbabilitySpace) : prob_weight ⟨[1, 2, 3], [1, 1, 1]⟩ = 3 := by rfl"
+            },
+            {
+                "agent": "Analysis-Agent",
+                "session_timestamp": "2025-09-09 09:41:38",
+                "natural_language_question": "What is the InnerProduct structure in functional analysis?",
+                "lean_code": "structure InnerProduct where\n  space : List Nat\n  product : Nat → Nat → Nat\ndef inner (ip : InnerProduct) (a b : Nat) : Nat := ip.product a b\ntheorem inner_example : inner ⟨[1, 2, 3], (· * ·)⟩ 4 5 = 20 := by rfl"
+            },
+            {
+                "agent": "Dynamics-Agent", 
+                "session_timestamp": "2025-09-09 09:41:38",
+                "natural_language_question": "What is the DynamicalSystem structure in dynamical systems?",
+                "lean_code": "structure DynamicalSystem where\n  state_space : List Nat\n  evolution : Nat → Nat\ndef evolve (ds : DynamicalSystem) (state : Nat) (time : Nat) : Nat := match time with | 0 => state | Nat.succ t => ds.evolution (evolve ds state t)\ntheorem evolve_zero (ds : DynamicalSystem) (s : Nat) : evolve ds s 0 = s := by rfl"
+            }
+        ];
+
+        // Load Lean data
+        async function loadLeanData() {
+            try {
+                const response = await fetch('./game_results/extracted_lean_questions.json');
+                leanData = await response.json();
+                console.log(`Loaded ${leanData.length} Lean code entries from file`);
+            } catch (error) {
+                console.log('Loading from embedded data');
+                leanData = embeddedLeanData;
+            }
+            createGraphFromLeanData();
+        }
+
+        function createGraphFromLeanData() {
+            // Clear existing data
+            nodes.length = 0;
+            nodeObjects.forEach(obj => scene.remove(obj));
+            nodeObjects.length = 0;
+            edgeObjects.forEach(obj => scene.remove(obj.line));
+            edgeObjects.length = 0;
+
+            // Create nodes from Lean data
+            leanData.forEach((entry, index) => {
+                const node = {
+                    id: `lean_${index}`,
+                    label: entry.natural_language_question,
+                    agent: entry.agent,
+                    code: entry.lean_code,
+                    timestamp: entry.session_timestamp,
+                    x: (Math.random() - 0.5) * 30,
+                    y: (Math.random() - 0.5) * 30,
+                    z: (Math.random() - 0.5) * 30,
+                    vx: 0, vy: 0, vz: 0,
+                    fx: 0, fy: 0, fz: 0
+                };
+                nodes.push(node);
+
+                // Create visual node with color based on agent type
+                let color;
+                if (entry.agent.includes('MeasureTheory')) {
+                    color = 0x2196f3; // Blue
+                } else if (entry.agent.includes('Analysis')) {
+                    color = 0x4caf50; // Green
+                } else if (entry.agent.includes('Dynamics')) {
+                    color = 0x9c27b0; // Purple
+                } else {
+                    color = 0x607d8b; // Blue Grey
+                }
+
+                const geometry = new THREE.SphereGeometry(0.8, 16, 16);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: color,
+                    emissive: new THREE.Color(color).multiplyScalar(0.1),
+                    shininess: 100
+                });
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(node.x, node.y, node.z);
+                sphere.userData = { nodeData: node, type: 'node' };
+                scene.add(sphere);
+                nodeObjects.push(sphere);
+            });
+
+            // Create edges based on semantic similarity (agents of same type)
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const nodeA = nodes[i];
+                    const nodeB = nodes[j];
+                    
+                    // Connect nodes from same agent type with higher probability
+                    const sameAgent = nodeA.agent === nodeB.agent;
+                    const shouldConnect = sameAgent ? Math.random() < 0.4 : Math.random() < 0.1;
+                    
+                    if (shouldConnect) {
+                        const edge = {
+                            source: nodeA,
+                            target: nodeB,
+                            weight: sameAgent ? 0.8 : 0.3
+                        };
+                        edges.push(edge);
+
+                        // Create visual edge
+                        const geometry = new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(nodeA.x, nodeA.y, nodeA.z),
+                            new THREE.Vector3(nodeB.x, nodeB.y, nodeB.z)
+                        ]);
+                        const material = new THREE.LineBasicMaterial({ 
+                            color: sameAgent ? 0x666666 : 0x333333,
+                            opacity: sameAgent ? 0.6 : 0.3,
+                            transparent: true
+                        });
+                        const line = new THREE.Line(geometry, material);
+                        scene.add(line);
+                        edgeObjects.push({ line, edge });
+                    }
+                }
+            }
+
+            console.log(`Created graph with ${nodes.length} nodes and ${edges.length} edges`);
+        }
+
+        // Physics simulation
+        function updatePhysics() {
+            if (nodes.length === 0) return;
+            
+            const alpha = 0.1;
+            const repulsion = 15;
+            const attraction = 0.02;
+
+            // Reset forces
+            nodes.forEach(node => {
+                node.fx = 0;
+                node.fy = 0;
+                node.fz = 0;
+            });
+
+            // Repulsion between all nodes
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const nodeA = nodes[i];
+                    const nodeB = nodes[j];
+                    
+                    const dx = nodeA.x - nodeB.x;
+                    const dy = nodeA.y - nodeB.y;
+                    const dz = nodeA.z - nodeB.z;
+                    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
+                    
+                    const force = repulsion / (distance * distance);
+                    const fx = (dx / distance) * force;
+                    const fy = (dy / distance) * force;
+                    const fz = (dz / distance) * force;
+                    
+                    nodeA.fx += fx;
+                    nodeA.fy += fy;
+                    nodeA.fz += fz;
+                    nodeB.fx -= fx;
+                    nodeB.fy -= fy;
+                    nodeB.fz -= fz;
+                }
+            }
+
+            // Attraction along edges
+            edges.forEach(edge => {
+                const dx = edge.target.x - edge.source.x;
+                const dy = edge.target.y - edge.source.y;
+                const dz = edge.target.z - edge.source.z;
+                const distance = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
+                
+                const force = attraction * distance * edge.weight;
+                const fx = (dx / distance) * force;
+                const fy = (dy / distance) * force;
+                const fz = (dz / distance) * force;
+                
+                edge.source.fx += fx;
+                edge.source.fy += fy;
+                edge.source.fz += fz;
+                edge.target.fx -= fx;
+                edge.target.fy -= fy;
+                edge.target.fz -= fz;
+            });
+
+            // Update positions
+            nodes.forEach(node => {
+                node.vx = (node.vx + node.fx) * 0.9;
+                node.vy = (node.vy + node.fy) * 0.9;
+                node.vz = (node.vz + node.fz) * 0.9;
+                node.x += node.vx * alpha;
+                node.y += node.vy * alpha;
+                node.z += node.vz * alpha;
+            });
+        }
+
+        // Mouse interaction
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        const tooltip = document.getElementById('tooltip');
+        const codeModal = document.getElementById('code-modal');
+        const modalContent = document.getElementById('modal-content');
+        const closeModal = document.getElementById('close-modal');
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(nodeObjects);
+
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const nodeData = intersect.object.userData.nodeData;
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = event.clientX + 10 + 'px';
+                tooltip.style.top = event.clientY + 10 + 'px';
+                tooltip.innerHTML = `
+                    <strong>${nodeData.agent}</strong><br>
+                    ${nodeData.label}<br>
+                    <small style="color: #888;">Click to view Lean code</small>
+                `;
+                
+                // Highlight node
+                intersect.object.material.emissive.setHex(0x444444);
+                
+                // Change cursor to pointer
+                document.body.style.cursor = 'pointer';
+            } else {
+                tooltip.style.display = 'none';
+                document.body.style.cursor = 'default';
+                
+                // Reset all node highlights
+                nodeObjects.forEach(obj => {
+                    const baseColor = obj.material.color.getHex();
+                    obj.material.emissive.copy(new THREE.Color(baseColor).multiplyScalar(0.1));
+                });
+            }
+        }
+
+        function onMouseClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(nodeObjects);
+
+            if (intersects.length > 0) {
+                const nodeData = intersects[0].object.userData.nodeData;
+                showCodeModal(nodeData);
+            }
+        }
+
+        function showCodeModal(nodeData) {
+            const agentType = nodeData.agent.replace('-Agent', '');
+            
+            modalContent.innerHTML = `
+                <div class="modal-title">${nodeData.label}</div>
+                <div class="agent-type">Agent: ${nodeData.agent} | Session: ${nodeData.timestamp}</div>
+                <strong>Lean 4 Code:</strong>
+                <pre><code>${nodeData.code}</code></pre>
+            `;
+            
+            codeModal.style.display = 'block';
+            tooltip.style.display = 'none';
+        }
+
+        function hideCodeModal() {
+            codeModal.style.display = 'none';
+        }
+
+        // Event listeners
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('click', onMouseClick);
+        closeModal.addEventListener('click', hideCodeModal);
+
+        // Close modal with Escape key
+        window.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                hideCodeModal();
+            }
+        });
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            updatePhysics();
+            
+            // Update visual positions
+            nodeObjects.forEach((obj, index) => {
+                if (nodes[index]) {
+                    const node = nodes[index];
+                    obj.position.set(node.x, node.y, node.z);
+                }
+            });
+
+            // Update edge positions
+            edgeObjects.forEach(({ line, edge }) => {
+                const positions = line.geometry.attributes.position.array;
+                positions[0] = edge.source.x;
+                positions[1] = edge.source.y;
+                positions[2] = edge.source.z;
+                positions[3] = edge.target.x;
+                positions[4] = edge.target.y;
+                positions[5] = edge.target.z;
+                line.geometry.attributes.position.needsUpdate = true;
+            });
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Set initial camera position
+        camera.position.set(0, 0, 20);
+
+        // Initialize
+        loadLeanData();
+        animate();
+    </script>
+</body>
+</html>

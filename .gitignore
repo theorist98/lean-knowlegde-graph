@@ -1,0 +1,7 @@
+node_modules/
+package-lock.json
+.DS_Store
+*.log
+game_results/
+run_*.py
+extract_*.py
