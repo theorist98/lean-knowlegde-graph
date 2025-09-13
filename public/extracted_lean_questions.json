@@ -3,7 +3,39 @@
     "agent": "MeasureTheory-Agent",
     "session_timestamp": "2025-09-09 09:34:54",
     "natural_language_question": "What is the measure theory theorem event_prob_example?",
-    "lean_code": "structure SimpleEvent where\n  total_outcomes : Nat\n  successful_outcomes : Nat\ndef event_probability (e : SimpleEvent) : Nat × Nat := (e.successful_outcomes, e.total_outcomes)\ntheorem event_prob_example : event_probability ⟨20, 8⟩ = (8, 20) := by rfl"
+    "lean_code": "structure SimpleEvent where\n  total_outcomes : Nat\n  successful_outcomes : Nat\ndef event_probability (e : SimpleEvent) : Nat × Nat := (e.successful_outcomes, e.total_outcomes)\ntheorem event_prob_example : event_probability ⟨20, 8⟩ = (8, 20) := by rfl",
+    "simulation_results": {
+      "images": [
+        {
+          "filename": "convergence_plot.png",
+          "description": "Shows convergence of running probability estimate to theoretical value 8/20 = 0.4 over 5000 trials",
+          "path": "public/simulations/convergence_plot.png"
+        },
+        {
+          "filename": "sampling_distribution.png",
+          "description": "Histogram showing sampling distribution of probability estimates with 20 draws per experiment, centered around theoretical 0.4",
+          "path": "public/simulations/sampling_distribution.png"
+        }
+      ],
+      "simulation_code": {
+        "language": "python",
+        "file_path": "public/simulations/event_prob_example_simulation.py",
+        "description": "Monte Carlo simulation demonstrating the Lean theorem event_prob_example. Mirrors the Lean definitions in Python and generates convergence plots and sampling distributions to visualize the theoretical probability 8/20 = 0.4",
+        "key_features": [
+          "Mirrors Lean SimpleEvent structure and event_probability function in Python",
+          "Demonstrates Law of Large Numbers with convergence plot",
+          "Shows sampling distribution for n=20 (matching Lean theorem parameters)",
+          "Includes accuracy analysis across different sample sizes",
+          "Generates reproducible results with seeded random number generator"
+        ]
+      },
+      "execution_results": {
+        "theoretical_probability": "8/20 = 2/5 = 0.4000",
+        "convergence_trials": 5000,
+        "sampling_experiments": 10000,
+        "accuracy_table_generated": "event_prob_example_accuracy.csv"
+      }
+    }
   },
   {
     "agent": "Analysis-Agent",
