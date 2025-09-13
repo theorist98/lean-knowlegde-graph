@@ -190,6 +190,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
+        // ---------- Helpers ----------
+        // Resolve repo-relative asset URLs correctly on GitHub Pages
+        const asset = (p) => new URL(p, document.baseURI).href;
+
+        // Safely escape code before injecting into <pre><code>
+        function escapeHtml(str) {
+            return (str ?? '').toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
         // Scene setup
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0a0a);
@@ -367,26 +379,8 @@
             console.log('First embedded entry:', leanData[0]);
             console.log('First embedded entry has simulation_results?', !!leanData[0]?.simulation_results);
 
-            /* COMMENTED OUT FOR TESTING
-            try {
-                const response = await fetch('./public/extracted_lean_questions.json');
-                if (response.ok) {
-                    leanData = await response.json();
-                    console.log('Loaded ' + leanData.length + ' Lean code entries from JSON file');
-                    console.log('First entry from JSON:', leanData[0]);
-                    console.log('First entry has simulation_results?', !!leanData[0]?.simulation_results);
-                } else {
-                    throw new Error('Failed to fetch JSON file');
-                }
-            } catch (error) {
-                console.log('Failed to load JSON, using embedded data:', error.message);
-                leanData = embeddedLeanData;
-                console.log('Using ' + leanData.length + ' embedded entries');
-                console.log('First embedded entry:', leanData[0]);
-                console.log('First embedded entry has simulation_results?', !!leanData[0]?.simulation_results);
-            }
-            */
-            
+            // (JSON loading commented out intentionally during testing)
+
             // Always add sample entries for new agent types to demonstrate legend
             var newAgentSamples = [
                 {
@@ -446,6 +440,11 @@
                     agent: entry.agent,
                     code: entry.lean_code,
                     timestamp: entry.session_timestamp,
+                    // *** carry simulation_results forward so modal can see it ***
+                    simulation_results: entry.simulation_results,
+                    // also keep the original question for tooltip fallback
+                    natural_language_question: entry.natural_language_question,
+
                     x: (Math.random() - 0.5) * 30,
                     y: (Math.random() - 0.5) * 30,
                     z: (Math.random() - 0.5) * 30,
@@ -666,7 +665,7 @@
             }
         }
 
-        function showCodeModal(nodeData) {
+        async function showCodeModal(nodeData) {
             console.log('=== DEBUG: showCodeModal called ===');
             console.log('Full nodeData object:', nodeData);
             console.log('nodeData.simulation_results:', nodeData.simulation_results);
@@ -676,50 +675,68 @@
 
             let modalHTML = `
                 <div class="modal-title">${nodeData.natural_language_question || nodeData.label}</div>
-                <div class="agent-type">Agent: ${nodeData.agent} | Session: ${nodeData.session_timestamp || nodeData.timestamp}</div>
+                <div class="agent-type">Agent: ${nodeData.agent} | Session: ${nodeData.session_timestamp || nodeData.timestamp || ''}</div>
                 <strong>Lean 4 Code:</strong>
-                <pre><code>${nodeData.lean_code || nodeData.code}</code></pre>
+                <pre><code>${escapeHtml(nodeData.lean_code || nodeData.code || '')}</code></pre>
             `;
 
             // Add simulation results if they exist
             console.log('Checking for simulation_results...');
             if (nodeData.simulation_results) {
                 console.log('Found simulation_results, adding to modal');
+                const sim = nodeData.simulation_results;
                 modalHTML += `
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
                         <strong style="color: #4fc3f7;">🧪 Simulation Results</strong>
-                        <p style="color: #ccc; margin: 8px 0;">${nodeData.simulation_results.simulation_code.description}</p>
+                        <p style="color: #ccc; margin: 8px 0;">${escapeHtml(sim.simulation_code?.description || '')}</p>
                 `;
 
                 // Add simulation images
-                if (nodeData.simulation_results.images && nodeData.simulation_results.images.length > 0) {
+                if (Array.isArray(sim.images) && sim.images.length > 0) {
                     modalHTML += '<div style="margin: 15px 0;"><strong>Visualizations:</strong></div>';
-                    nodeData.simulation_results.images.forEach((image, index) => {
+                    sim.images.forEach((image) => {
+                        const src = asset(image.path);
+                        const alt = image.description || '';
                         modalHTML += `
                             <div style="margin: 10px 0;">
-                                <img src="${image.path}" alt="${image.description}"
+                                <img src="${src}" alt="${escapeHtml(alt)}"
                                      style="max-width: 100%; height: auto; border: 1px solid #444; border-radius: 4px;">
-                                <p style="color: #888; font-size: 12px; margin: 5px 0;"><em>${image.description}</em></p>
+                                <p style="color: #888; font-size: 12px; margin: 5px 0;"><em>${escapeHtml(alt)}</em></p>
                             </div>
                         `;
                     });
                 }
 
-                // Add simulation code details
-                if (nodeData.simulation_results.simulation_code) {
-                    const simCode = nodeData.simulation_results.simulation_code;
+                // Add simulation code details + LOAD FILE CONTENT
+                if (sim.simulation_code) {
+                    const simCode = sim.simulation_code;
+                    let simText = '';
+                    if (simCode.file_path) {
+                        try {
+                            const r = await fetch(asset(simCode.file_path));
+                            if (r.ok) {
+                                simText = await r.text();
+                            } else {
+                                simText = `// Could not load file: ${simCode.file_path} (status ${r.status})`;
+                            }
+                        } catch (e) {
+                            simText = `// Error fetching ${simCode.file_path}: ${e && e.message ? e.message : e}`;
+                        }
+                    }
+
                     modalHTML += `
                         <div style="margin: 15px 0;">
                             <strong>Simulation Code:</strong>
                             <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin: 8px 0; border: 1px solid #333;">
-                                <div style="color: #4fc3f7; margin-bottom: 8px;">📁 ${simCode.file_path}</div>
-                                <div style="color: #88c999; margin-bottom: 8px;">Language: ${simCode.language}</div>
+                                <div style="color: #4fc3f7; margin-bottom: 8px;">📁 ${escapeHtml(simCode.file_path || '')}</div>
+                                <div style="color: #88c999; margin-bottom: 8px;">Language: ${escapeHtml(simCode.language || '')}</div>
+                                ${simText ? `<pre><code>${escapeHtml(simText)}</code></pre>` : ''}
                     `;
 
-                    if (simCode.key_features) {
+                    if (Array.isArray(simCode.key_features) && simCode.key_features.length > 0) {
                         modalHTML += '<div style="color: #ccc; font-size: 13px;"><strong>Key Features:</strong><ul style="margin: 5px 0; padding-left: 20px;">';
                         simCode.key_features.forEach(feature => {
-                            modalHTML += `<li>${feature}</li>`;
+                            modalHTML += `<li>${escapeHtml(feature)}</li>`;
                         });
                         modalHTML += '</ul></div>';
                     }
@@ -728,8 +745,8 @@
                 }
 
                 // Add execution results
-                if (nodeData.simulation_results.execution_results) {
-                    const results = nodeData.simulation_results.execution_results;
+                if (sim.execution_results && typeof sim.execution_results === 'object') {
+                    const results = sim.execution_results;
                     modalHTML += `
                         <div style="margin: 15px 0;">
                             <strong>Execution Results:</strong>
@@ -738,7 +755,7 @@
 
                     Object.entries(results).forEach(([key, value]) => {
                         const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        modalHTML += `<div style="margin: 3px 0;"><span style="color: #88c999;">${displayKey}:</span> ${value}</div>`;
+                        modalHTML += `<div style="margin: 3px 0;"><span style="color: #88c999;">${escapeHtml(displayKey)}:</span> ${escapeHtml(String(value))}</div>`;
                     });
 
                     modalHTML += '</div></div>';
@@ -747,114 +764,14 @@
                 modalHTML += '</div>';
             } else {
                 console.log('No simulation_results found for:', nodeData.agent, nodeData.natural_language_question);
-            }
-
-            // ALWAYS add simulation section placeholder for ALL nodes
-            modalHTML += `
-                <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
-                    <strong style="color: #4fc3f7;">🧪 Simulation Results</strong>
-            `;
-
-            if (nodeData.simulation_results) {
-                modalHTML += `<p style="color: #ccc; margin: 8px 0;">Real simulation data should appear here.</p>`;
-                // Add real simulation data here when it works
-            } else {
-                // Check if this is the event_prob_example node and show real simulation code
-                if (nodeData.natural_language_question && nodeData.natural_language_question.includes('event_prob_example')) {
-                    modalHTML += `
-                        <p style="color: #ccc; margin: 8px 0;">Monte Carlo simulation demonstrating the Lean theorem event_prob_example. Shows convergence to theoretical probability 8/20 = 0.4</p>
-                        <div style="margin: 15px 0;"><strong>Simulation Features:</strong></div>
-                        <div style="background: #333; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                            <ul style="color: #aaa; margin: 5px 0; padding-left: 20px;">
-                                <li>Convergence plot showing running estimate approaching 0.4</li>
-                                <li>Sampling distribution histogram for n=20 experiments</li>
-                                <li>Statistical analysis across 5000 trials</li>
-                                <li>Reproducible results with seeded random number generator</li>
-                            </ul>
-                        </div>
-
-                        <div style="margin: 15px 0;"><strong>Simulation Code:</strong></div>
-                        <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin: 8px 0; border: 1px solid #333;">
-                            <div style="color: #4fc3f7; margin-bottom: 8px;">📁 event_prob_example_simulation.py</div>
-                            <div style="color: #88c999; margin-bottom: 8px;">Language: Python</div>
-                            <pre style="color: #ccc; font-size: 12px; line-height: 1.4; max-height: 300px; overflow-y: auto; background: #111; padding: 10px; border-radius: 4px; margin: 10px 0;">from dataclasses import dataclass
-from fractions import Fraction
-import numpy as np
-import matplotlib.pyplot as plt
-
-@dataclass(frozen=True)
-class SimpleEvent:
-    total_outcomes: int
-    successful_outcomes: int
-
-def event_probability(e: SimpleEvent) -> tuple[int, int]:
-    return (e.successful_outcomes, e.total_outcomes)
-
-# The Lean theorem's instance: ⟨20, 8⟩
-lean_event = SimpleEvent(total_outcomes=20, successful_outcomes=8)
-assert event_probability(lean_event) == (8, 20)
-
-# Theoretical probability
-p = 8/20  # 0.4
-
-# Monte Carlo simulation
-rng = np.random.default_rng(20250909)
-
-def running_estimate(event, n_draws, rng):
-    draws = rng.integers(low=1, high=event.total_outcomes + 1, size=n_draws)
-    success_mask = draws <= event.successful_outcomes
-    cum_successes = np.cumsum(success_mask)
-    running_p_hat = cum_successes / np.arange(1, n_draws + 1)
-    return running_p_hat
-
-# Generate convergence plot
-n_draws = 5000
-rp = running_estimate(lean_event, n_draws=n_draws, rng=rng)
-
-plt.figure(figsize=(10, 6))
-x = np.arange(1, n_draws + 1)
-plt.plot(x, rp, label="Running estimate")
-plt.axhline(p, linestyle="--", label=f"Theoretical {p:.3f}")
-plt.xlabel("Number of draws")
-plt.ylabel("Estimated P(success)")
-plt.title("Convergence to Lean ratio (8, 20) → 8/20")
-plt.legend()
-plt.grid(True)
-plt.show()</pre>
-                        </div>
-                    `;
-                } else {
-                    modalHTML += `
+                // Placeholder section
+                modalHTML += `
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
+                        <strong style="color: #4fc3f7;">🧪 Simulation Results</strong>
                         <p style="color: #ccc; margin: 8px 0;">Simulation data is being prepared for this theorem.</p>
-                        <div style="margin: 15px 0;"><strong>Simulation Features (Coming Soon):</strong></div>
-                        <div style="background: #333; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                            <ul style="color: #aaa; margin: 5px 0; padding-left: 20px;">
-                                <li>Interactive visualizations of the theorem</li>
-                                <li>Monte Carlo simulations and statistical analysis</li>
-                                <li>Python/Julia code implementing the mathematical concepts</li>
-                                <li>Convergence plots and distribution charts</li>
-                            </ul>
-                        </div>
-
-                        <div style="margin: 15px 0;"><strong>Simulation Code:</strong></div>
-                        <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin: 8px 0; border: 1px solid #333;">
-                            <div style="color: #4fc3f7; margin-bottom: 8px;">📁 Simulation code will be available here</div>
-                            <div style="color: #88c999; margin-bottom: 8px;">Language: Python</div>
-                            <div style="color: #ccc; font-size: 13px;">
-                                <strong>Expected Features:</strong>
-                                <ul style="margin: 5px 0; padding-left: 20px;">
-                                    <li>Mathematical theorem implementation</li>
-                                    <li>Statistical validation and testing</li>
-                                    <li>Visualization generation</li>
-                                    <li>Reproducible analysis with seeded randomness</li>
-                                </ul>
-                            </div>
-                        </div>
-                    `;
-                }
+                    </div>
+                `;
             }
-
-            modalHTML += `</div>`;
 
             console.log('Final modalHTML:', modalHTML);
             modalContent.innerHTML = modalHTML;
@@ -991,4 +908,3 @@ plt.show()</pre>
     </script>
 </body>
 </html>
-
