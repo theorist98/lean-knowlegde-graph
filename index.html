@@ -646,6 +646,11 @@
         }
 
         function showCodeModal(nodeData) {
+            console.log('=== DEBUG: showCodeModal called ===');
+            console.log('Full nodeData object:', nodeData);
+            console.log('nodeData.simulation_results:', nodeData.simulation_results);
+            console.log('Has simulation_results?', !!nodeData.simulation_results);
+
             const agentType = nodeData.agent.replace('-Agent', '');
 
             let modalHTML = `
@@ -656,7 +661,9 @@
             `;
 
             // Add simulation results if they exist
+            console.log('Checking for simulation_results...');
             if (nodeData.simulation_results) {
+                console.log('Found simulation_results, adding to modal');
                 modalHTML += `
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
                         <strong style="color: #4fc3f7;">🧪 Simulation Results</strong>
@@ -717,8 +724,25 @@
                 }
 
                 modalHTML += '</div>';
+            } else {
+                console.log('No simulation_results found');
+                // TEMPORARY DEBUG: Force show test simulation section for MeasureTheory-Agent
+                if (nodeData.agent === 'MeasureTheory-Agent') {
+                    console.log('Adding test simulation section for MeasureTheory-Agent');
+                    modalHTML += `
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
+                            <strong style="color: #4fc3f7;">🧪 DEBUG: Test Simulation Results</strong>
+                            <p style="color: #ccc; margin: 8px 0;">This is a test simulation section to check if HTML rendering works.</p>
+                            <div style="margin: 15px 0;"><strong>Test Visualizations:</strong></div>
+                            <div style="background: #333; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                                <p style="color: #ccc;">Test simulation content would appear here.</p>
+                            </div>
+                        </div>
+                    `;
+                }
             }
 
+            console.log('Final modalHTML:', modalHTML);
             modalContent.innerHTML = modalHTML;
             codeModal.style.display = 'block';
             tooltip.style.display = 'none';
