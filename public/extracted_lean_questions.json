@@ -41,7 +41,35 @@
     "agent": "Analysis-Agent",
     "session_timestamp": "2025-09-09 09:34:54",
     "natural_language_question": "What is the functional analysis theorem map_additivity?",
-    "lean_code": "structure LinearMap where  \n  source : List Nat  \n  target : List Nat  \ndef map (f : LinearMap) (v : List Nat) : List Nat := f.target.map (fun t => t + (v.foldl (· + ·) 0))  \ntheorem map_additivity (f : LinearMap) (v₁ v₂ : List Nat) :  \n  map f (v₁ ++ v₂) = map f v₁ ++ map f v₂ := by  \n  simp  \n  rfl"
+    "lean_code": "structure LinearMap where  \n  source : List Nat  \n  target : List Nat  \ndef map (f : LinearMap) (v : List Nat) : List Nat := f.target.map (fun t => t + (v.foldl (· + ·) 0))  \ntheorem map_additivity (f : LinearMap) (v₁ v₂ : List Nat) :  \n  map f (v₁ ++ v₂) = map f v₁ ++ map f v₂ := by  \n  simp  \n  rfl",
+    "simulation_results": {
+      "images": [
+        {
+          "filename": "map_additivity_success_rates.png",
+          "description": "Bar chart showing success rates of the map additivity theorem by target length. Shows theorem holds only for empty targets (1.0 success rate) and fails for all non-empty targets (0.0 success rate)",
+          "path": "public/simulations/map_additivity_success_rates.png"
+        }
+      ],
+      "simulation_code": {
+        "language": "python",
+        "file_path": "public/simulations/map_additivity_simulation.py",
+        "description": "Monte Carlo simulation testing the map additivity theorem across different target lengths. Demonstrates that the theorem fails for non-empty targets due to list concatenation length mismatches but holds perfectly for empty targets.",
+        "key_features": [
+          "Mirrors Lean LinearMap structure and map function in Python",
+          "Tests map_additivity property: map f (v1 ++ v2) = map f v1 ++ map f v2",
+          "Demonstrates theorem failure mechanism with concrete examples",
+          "Shows success rate dependency on target list length",
+          "Provides statistical analysis across 400 trials per target length"
+        ]
+      },
+      "execution_results": {
+        "empty_target_success_rate": "1.000 (always holds for empty targets)",
+        "nonempty_target_success_rate": "0.000 (always fails due to length mismatch)",
+        "target_lengths_tested": "0 through 6",
+        "trials_per_length": 400,
+        "key_insight": "Theorem only holds when target list is empty"
+      }
+    }
   },
   {
     "agent": "Analysis-Agent",
