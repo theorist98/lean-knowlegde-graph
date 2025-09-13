@@ -72,22 +72,10 @@
     }
   },
   {
-    "agent": "Analysis-Agent",
-    "session_timestamp": "2025-09-09 09:34:54",
-    "natural_language_question": "What is the functional analysis theorem map_additivity?",
-    "lean_code": "structure LinearMap where\nsource : List Nat\ntarget : List Nat\ndef map (f : LinearMap) (v : List Nat) : List Nat := f.target.map (fun t => t + (v.foldl (· + ·) 0))\ntheorem map_additivity (f : LinearMap) (v₁ v₂ : List Nat) :\nmap f (v₁ ++ v₂) = map f v₁ ++ map f v₂ := by\nsimp\nrfl"
-  },
-  {
     "agent": "Dynamics-Agent",
     "session_timestamp": "2025-09-09 09:34:54",
     "natural_language_question": "What is the dynamical systems theorem iterate_cycle_zero?",
     "lean_code": "structure CycleTransform where  \n  shift : Nat → Nat  \ndef iterate_cycle (c : CycleTransform) (start : Nat) (steps : Nat) : Nat := match steps with  \n  | 0 => start  \n  | Nat.succ k => iterate_cycle c (c.shift start) k  \ntheorem iterate_cycle_zero (c : CycleTransform) (start : Nat) : iterate_cycle c start 0 = start := by rfl  \ntheorem iterate_cycle_add (c : CycleTransform) (start : Nat) (n m : Nat) :  \n  iterate_cycle c start (n + m) = iterate_cycle c (iterate_cycle c start n) m := by  \n  induction n with  \n  | zero => simp  \n  | succ n ih => simp [ih]"
-  },
-  {
-    "agent": "Dynamics-Agent",
-    "session_timestamp": "2025-09-09 09:34:54",
-    "natural_language_question": "What is the dynamical systems theorem iterate_cycle_zero?",
-    "lean_code": "structure CycleTransform where\nshift : Nat → Nat\ndef iterate_cycle (c : CycleTransform) (start : Nat) (steps : Nat) : Nat := match steps with\n| 0 => start\n| Nat.succ k => iterate_cycle c (c.shift start) k\ntheorem iterate_cycle_zero (c : CycleTransform) (start : Nat) : iterate_cycle c start 0 = start := by rfl\ntheorem iterate_cycle_add (c : CycleTransform) (start : Nat) (n m : Nat) :\niterate_cycle c start (n + m) = iterate_cycle c (iterate_cycle c start n) m := by\ninduction n with\n| zero => simp\n| succ n ih => simp [ih]"
   },
   {
     "agent": "MeasureTheory-Agent",
@@ -114,28 +102,10 @@
     "lean_code": "structure BasicProbability where  \n  totalCases : Nat  \n  successCount : Nat  \ndef compute_probability (bp : BasicProbability) : Nat × Nat := (bp.successCount, bp.totalCases)  \ntheorem example_probability : compute_probability ⟨8, 5⟩ = (5, 8) := by rfl"
   },
   {
-    "agent": "Analysis-Agent",
-    "session_timestamp": "2025-09-09 09:34:54",
-    "natural_language_question": "What is the functional analysis theorem basic_probability_example?",
-    "lean_code": "structure EventProbability where  \n  totalEvents : Nat  \n  favorableEvents : Nat  \ndef calculate_probability (ep : EventProbability) : Nat × Nat := (ep.favorableEvents, ep.totalEvents)  \ntheorem basic_probability_example : calculate_probability ⟨10, 3⟩ = (3, 10) := by rfl"
-  },
-  {
-    "agent": "Dynamics-Agent",
-    "session_timestamp": "2025-09-09 09:34:54",
-    "natural_language_question": "What is the dynamical systems theorem apply_mapping_zero?",
-    "lean_code": "structure CycleMapping where  \n  step : Nat → Nat  \ndef apply_mapping (cm : CycleMapping) (x : Nat) (n : Nat) : Nat := match n with | 0 => x | Nat.succ k => cm.step (apply_mapping cm x k)  \ntheorem apply_mapping_zero (cm : CycleMapping) (x : Nat) : apply_mapping cm x 0 = x := by rfl"
-  },
-  {
     "agent": "MeasureTheory-Agent",
     "session_timestamp": "2025-09-09 09:44:03",
     "natural_language_question": "What is the measure theory theorem expectation_example?",
     "lean_code": "structure DiscreteRandomVariable where\n  sampleSpace : Nat\n  outcomeProbabilities : List Nat\ndef expectation (rv : DiscreteRandomVariable) : Nat :=\n  List.sum rv.outcomeProbabilities / rv.sampleSpace\ntheorem expectation_example : expectation ⟨10, [1, 2, 3, 4]⟩ = 10 := by simp"
-  },
-  {
-    "agent": "MeasureTheory-Agent",
-    "session_timestamp": "2025-09-09 09:44:03",
-    "natural_language_question": "What is the measure theory theorem expectation_example?",
-    "lean_code": "structure DiscreteRandomVariable where\n  sampleSpace : Nat\n  outcomeProbabilities : List Nat\ndef expectation (rv : DiscreteRandomVariable) : Nat :=\n  List.sum rv.outcomeProbabilities / rv.sampleSpace\ntheorem expectation_example : True := True.intro"
   },
   {
     "agent": "Analysis-Agent",
@@ -144,22 +114,10 @@
     "lean_code": "structure InnerProductSpace where\n  elements : List Nat\n  innerProduct : Prod Nat Nat → Nat\ndef vectorAddition (u v : InnerProductSpace) : InnerProductSpace :=\n  ⟨List.zipWith Nat.add u.elements v.elements, u.innerProduct⟩\ntheorem vector_addition_commutative (u v : InnerProductSpace) : vectorAddition u v = vectorAddition v u := by simp"
   },
   {
-    "agent": "Analysis-Agent",
-    "session_timestamp": "2025-09-09 09:44:03",
-    "natural_language_question": "What is the functional analysis theorem vector_addition_commutative?",
-    "lean_code": "structure InnerProductSpace where\n  elements : List Nat\n  innerProduct : Prod Nat Nat → Nat\ndef vectorAddition (u v : InnerProductSpace) : InnerProductSpace :=\n  ⟨List.zipWith Nat.add u.elements v.elements, u.innerProduct⟩\ntheorem vector_addition_commutative : True := True.intro"
-  },
-  {
     "agent": "Dynamics-Agent",
     "session_timestamp": "2025-09-09 09:44:03",
     "natural_language_question": "What is the dynamical systems theorem applyRotation_zero?",
     "lean_code": "structure CircularTransformation where  \n  rotate : Nat → Nat  \ndef applyRotation (c : CircularTransformation) (x : Nat) (n : Nat) : Nat := match n with | 0 => x | Nat.succ k => applyRotation c (c.rotate x) k  \ntheorem applyRotation_zero (c : CircularTransformation) (x : Nat) : applyRotation c x 0 = x := by rfl  \ntheorem applyRotation_one (c : CircularTransformation) (x : Nat) : applyRotation c x 1 = c.rotate x := by rfl"
-  },
-  {
-    "agent": "MeasureTheory-Agent",
-    "session_timestamp": "2025-09-09 09:44:03",
-    "natural_language_question": "What is the measure theory theorem event_prob_example?",
-    "lean_code": "structure DiscreteEvent where\n  totalOutcomes : Nat\n  successfulOutcomes : Nat\ndef eventProbability (e : DiscreteEvent) : Nat × Nat := (e.successfulOutcomes, e.totalOutcomes)\ntheorem event_prob_example : eventProbability ⟨50, 15⟩ = (15, 50) := by rfl"
   },
   {
     "agent": "Analysis-Agent",
@@ -172,12 +130,6 @@
     "session_timestamp": "2025-09-09 09:44:03",
     "natural_language_question": "What is the dynamical systems theorem shift_identity?",
     "lean_code": "structure CircularShift where  \n  shift : Nat → Nat  \ndef applyShift (cs : CircularShift) (n : Nat) (step : Nat) : Nat := \n  (n + step) % (cs.shift step)  \ntheorem shift_identity (cs : CircularShift) (n : Nat) : applyShift cs n 0 = n := by rfl  \ntheorem shift_circularity (cs : CircularShift) (n : Nat) (step : Nat) : applyShift cs n (cs.shift step) = (n + step) % (cs.shift step) := by simp"
-  },
-  {
-    "agent": "Dynamics-Agent",
-    "session_timestamp": "2025-09-09 09:44:03",
-    "natural_language_question": "What is the dynamical systems theorem shift_identity?",
-    "lean_code": "structure CircularShift where  \n  shift : Nat → Nat  \ndef applyShift (cs : CircularShift) (n : Nat) (step : Nat) : Nat := \n  (n + step) % (cs.shift step)  \ntheorem shift_identity (cs : CircularShift) (n : Nat) : applyShift cs n 0 = n := by sorry  \ntheorem shift_circularity (cs : CircularShift) (n : Nat) (step : Nat) : applyShift cs n (cs.shift step) = (n + step) % (cs.shift step) := by sorry"
   },
   {
     "agent": "MeasureTheory-Agent",
@@ -196,18 +148,6 @@
     "session_timestamp": "2025-09-09 09:44:03",
     "natural_language_question": "What is the dynamical systems theorem map_example?",
     "lean_code": "structure CircularMapping where  \n  rotation : Nat → Nat  \ndef applyMap (c : CircularMapping) (x : Nat) : Nat := c.rotation x  \ntheorem map_example : applyMap ⟨fun n => (n + 1) % 10⟩ 3 = 4 := by rfl  \ntheorem map_periodicity (c : CircularMapping) (x : Nat) (k : Nat) : applyMap c (applyMap c x) k = applyMap c x := by simp"
-  },
-  {
-    "agent": "Dynamics-Agent",
-    "session_timestamp": "2025-09-09 09:44:03",
-    "natural_language_question": "What is the dynamical systems theorem map_example?",
-    "lean_code": "structure CircularMapping where  \n  rotation : Nat → Nat  \ndef applyMap (c : CircularMapping) (x : Nat) : Nat := c.rotation x  \ntheorem map_example : applyMap ⟨fun n => (n + 1) % 10⟩ 3 = 4 := by sorry  \ntheorem map_periodicity (c : CircularMapping) (x : Nat) (k : Nat) : applyMap c (applyMap c x) k = applyMap c x := by sorry"
-  },
-  {
-    "agent": "MeasureTheory-Agent",
-    "session_timestamp": "2025-09-09 09:59:35",
-    "natural_language_question": "What is the measure theory theorem event_prob_example?",
-    "lean_code": "structure EventProbability where\n  totalOutcomes : Nat\n  eventCases : Nat\ndef eventProbability (e : EventProbability) : Nat × Nat := (e.eventCases, e.totalOutcomes)\ntheorem event_prob_example : eventProbability ⟨20, 6⟩ = (6, 20) := by rfl"
   },
   {
     "agent": "Analysis-Agent",
