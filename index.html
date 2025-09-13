@@ -547,10 +547,12 @@
                 tooltip.style.display = 'block';
                 tooltip.style.left = event.clientX + 10 + 'px';
                 tooltip.style.top = event.clientY + 10 + 'px';
+                const hasSimulation = nodeData.simulation_results ? ' & simulation' : '';
+                const simulationIcon = nodeData.simulation_results ? '🧪 ' : '';
                 tooltip.innerHTML = `
-                    <strong>${nodeData.agent}</strong><br>
+                    <strong>${simulationIcon}${nodeData.agent}</strong><br>
                     ${nodeData.label}<br>
-                    <small style="color: #888;">Click to view Lean code</small>
+                    <small style="color: #888;">Click to view Lean code${hasSimulation}</small>
                 `;
                 
                 // Highlight node
@@ -585,14 +587,79 @@
 
         function showCodeModal(nodeData) {
             const agentType = nodeData.agent.replace('-Agent', '');
-            
-            modalContent.innerHTML = `
+
+            let modalHTML = `
                 <div class="modal-title">${nodeData.label}</div>
                 <div class="agent-type">Agent: ${nodeData.agent} | Session: ${nodeData.timestamp}</div>
                 <strong>Lean 4 Code:</strong>
                 <pre><code>${nodeData.code}</code></pre>
             `;
-            
+
+            // Add simulation results if they exist
+            if (nodeData.simulation_results) {
+                modalHTML += `
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
+                        <strong style="color: #4fc3f7;">🧪 Simulation Results</strong>
+                        <p style="color: #ccc; margin: 8px 0;">${nodeData.simulation_results.simulation_code.description}</p>
+                `;
+
+                // Add simulation images
+                if (nodeData.simulation_results.images && nodeData.simulation_results.images.length > 0) {
+                    modalHTML += '<div style="margin: 15px 0;"><strong>Visualizations:</strong></div>';
+                    nodeData.simulation_results.images.forEach((image, index) => {
+                        modalHTML += `
+                            <div style="margin: 10px 0;">
+                                <img src="${image.path}" alt="${image.description}"
+                                     style="max-width: 100%; height: auto; border: 1px solid #444; border-radius: 4px;">
+                                <p style="color: #888; font-size: 12px; margin: 5px 0;"><em>${image.description}</em></p>
+                            </div>
+                        `;
+                    });
+                }
+
+                // Add simulation code details
+                if (nodeData.simulation_results.simulation_code) {
+                    const simCode = nodeData.simulation_results.simulation_code;
+                    modalHTML += `
+                        <div style="margin: 15px 0;">
+                            <strong>Simulation Code:</strong>
+                            <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin: 8px 0; border: 1px solid #333;">
+                                <div style="color: #4fc3f7; margin-bottom: 8px;">📁 ${simCode.file_path}</div>
+                                <div style="color: #88c999; margin-bottom: 8px;">Language: ${simCode.language}</div>
+                    `;
+
+                    if (simCode.key_features) {
+                        modalHTML += '<div style="color: #ccc; font-size: 13px;"><strong>Key Features:</strong><ul style="margin: 5px 0; padding-left: 20px;">';
+                        simCode.key_features.forEach(feature => {
+                            modalHTML += `<li>${feature}</li>`;
+                        });
+                        modalHTML += '</ul></div>';
+                    }
+
+                    modalHTML += '</div>';
+                }
+
+                // Add execution results
+                if (nodeData.simulation_results.execution_results) {
+                    const results = nodeData.simulation_results.execution_results;
+                    modalHTML += `
+                        <div style="margin: 15px 0;">
+                            <strong>Execution Results:</strong>
+                            <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin: 8px 0; border: 1px solid #333; font-size: 13px;">
+                    `;
+
+                    Object.entries(results).forEach(([key, value]) => {
+                        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        modalHTML += `<div style="margin: 3px 0;"><span style="color: #88c999;">${displayKey}:</span> ${value}</div>`;
+                    });
+
+                    modalHTML += '</div></div>';
+                }
+
+                modalHTML += '</div>';
+            }
+
+            modalContent.innerHTML = modalHTML;
             codeModal.style.display = 'block';
             tooltip.style.display = 'none';
         }
@@ -618,10 +685,12 @@
                     const nodeData = intersect.object.userData.nodeData;
                     
                     tooltip.style.display = 'block';
-                    tooltip.innerHTML = 
-                        '<strong>' + nodeData.agent + '</strong><br>' +
+                    const hasSimulation = nodeData.simulation_results ? ' & simulation' : '';
+                    const simulationIcon = nodeData.simulation_results ? '🧪 ' : '';
+                    tooltip.innerHTML =
+                        '<strong>' + simulationIcon + nodeData.agent + '</strong><br>' +
                         nodeData.label + '<br>' +
-                        '<small style="color: #888;">Tap to view Lean code</small>';
+                        '<small style="color: #888;">Tap to view Lean code' + hasSimulation + '</small>';
                     
                     // Highlight node
                     intersect.object.material.emissive.setHex(0x444444);
