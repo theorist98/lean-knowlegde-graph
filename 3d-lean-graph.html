@@ -155,7 +155,7 @@
         // Load Lean data
         async function loadLeanData() {
             try {
-                const response = await fetch('./game_results/extracted_lean_questions.json');
+                const response = await fetch('./public/extracted_lean_questions.json');
                 leanData = await response.json();
                 
                 console.log(`Loaded ${leanData.length} Lean code entries`);
