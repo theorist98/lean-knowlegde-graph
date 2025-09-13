@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Lean Code Graph - Interactive</title>
+    <!-- Ensure all relative asset paths resolve under the repo path on GitHub Pages -->
+    <base href="./">
     <style>
         body {
             margin: 0;
@@ -120,7 +122,30 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
-        // Scene setup
+        // ---------- Helpers ----------
+        // Build URLs that honor <base href="./"> and work on GitHub Pages
+        const asset = (p) => new URL(p, document.baseURI).href;
+
+        // Safely escape HTML when injecting code
+        function escapeHtml(str) {
+            return (str ?? '').toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        // Resolve simulation asset paths:
+        // - absolute URLs (http/https/data) pass through
+        // - if string contains a slash, treat as relative and resolve with asset()
+        // - otherwise assume file lives under public/simulations/
+        function resolveSimAsset(p) {
+            if (!p) return '';
+            if (/^(https?:|data:)/.test(p)) return p;
+            const candidate = p.includes('/') ? p : `public/simulations/${p}`;
+            return asset(candidate);
+        }
+
+        // ---------- Scene setup ----------
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0a0a0a);
 
@@ -145,19 +170,20 @@
         directionalLight.castShadow = true;
         scene.add(directionalLight);
 
-        // Global variables
+        // ---------- Global variables ----------
         const nodes = [];
         const edges = [];
         const nodeObjects = [];
         const edgeObjects = [];
         let leanData = [];
+        const ENTRY_BY_NODE_ID = new Map(); // node.id -> full entry
 
-        // Load Lean data
+        // ---------- Load Lean data ----------
         async function loadLeanData() {
             try {
-                const response = await fetch('./public/extracted_lean_questions.json');
+                const response = await fetch('public/extracted_lean_questions.json');
                 leanData = await response.json();
-                
+
                 console.log(`Loaded ${leanData.length} Lean code entries`);
                 createGraphFromLeanData();
             } catch (error) {
@@ -170,6 +196,7 @@
         function createGraphFromLeanData() {
             // Clear existing data
             nodes.length = 0;
+            ENTRY_BY_NODE_ID.clear();
             nodeObjects.forEach(obj => scene.remove(obj));
             nodeObjects.length = 0;
             edgeObjects.forEach(obj => scene.remove(obj.line));
@@ -183,6 +210,8 @@
                     agent: entry.agent,
                     code: entry.lean_code,
                     timestamp: entry.session_timestamp,
+                    // carry simulation_results forward so UI can access it directly
+                    simulation_results: entry.simulation_results,
                     x: (Math.random() - 0.5) * 30,
                     y: (Math.random() - 0.5) * 30,
                     z: (Math.random() - 0.5) * 30,
@@ -190,27 +219,28 @@
                     fx: 0, fy: 0, fz: 0
                 };
                 nodes.push(node);
+                ENTRY_BY_NODE_ID.set(node.id, entry); // map node id -> full entry
 
                 // Create visual node with color based on agent type
                 let color;
-                if (entry.agent.includes('MeasureTheory')) {
+                if (entry.agent && entry.agent.includes('MeasureTheory')) {
                     color = 0x2196f3; // Blue
-                } else if (entry.agent.includes('Analysis')) {
+                } else if (entry.agent && entry.agent.includes('Analysis')) {
                     color = 0x4caf50; // Green
-                } else if (entry.agent.includes('Dynamics')) {
+                } else if (entry.agent && entry.agent.includes('Dynamics')) {
                     color = 0x9c27b0; // Purple
-                } else if (entry.agent.includes('Stochastic')) {
+                } else if (entry.agent && entry.agent.includes('Stochastic')) {
                     color = 0xffeb3b; // Yellow
-                } else if (entry.agent.includes('Fluid')) {
+                } else if (entry.agent && entry.agent.includes('Fluid')) {
                     color = 0xff9800; // Orange
-                } else if (entry.agent.includes('Nuclear')) {
+                } else if (entry.agent && entry.agent.includes('Nuclear')) {
                     color = 0xf44336; // Red
                 } else {
                     color = 0x607d8b; // Blue Grey
                 }
 
                 const geometry = new THREE.SphereGeometry(0.8, 16, 16);
-                const material = new THREE.MeshPhongMaterial({ 
+                const material = new THREE.MeshPhongMaterial({
                     color: color,
                     emissive: new THREE.Color(color).multiplyScalar(0.1),
                     shininess: 100
@@ -227,11 +257,11 @@
                 for (let j = i + 1; j < nodes.length; j++) {
                     const nodeA = nodes[i];
                     const nodeB = nodes[j];
-                    
+
                     // Connect nodes from same agent type with higher probability
                     const sameAgent = nodeA.agent === nodeB.agent;
                     const shouldConnect = sameAgent ? Math.random() < 0.3 : Math.random() < 0.05;
-                    
+
                     if (shouldConnect) {
                         const edge = {
                             source: nodeA,
@@ -245,7 +275,7 @@
                             new THREE.Vector3(nodeA.x, nodeA.y, nodeA.z),
                             new THREE.Vector3(nodeB.x, nodeB.y, nodeB.z)
                         ]);
-                        const material = new THREE.LineBasicMaterial({ 
+                        const material = new THREE.LineBasicMaterial({
                             color: sameAgent ? 0x666666 : 0x333333,
                             opacity: sameAgent ? 0.6 : 0.3,
                             transparent: true
@@ -267,15 +297,15 @@
                 { natural_language_question: "What is a linear transformation?", agent: "Analysis-Agent", lean_code: "structure LinearMap where\n  domain : List Nat\n  codomain : List Nat" },
                 { natural_language_question: "What is a dynamical system iteration?", agent: "Dynamics-Agent", lean_code: "def iterate (f : Nat → Nat) (x : Nat) (n : Nat) : Nat := sorry" }
             ];
-            
+
             leanData = sampleData;
             createGraphFromLeanData();
         }
 
-        // Physics simulation
+        // ---------- Physics simulation ----------
         function updatePhysics() {
             if (nodes.length === 0) return;
-            
+
             const alpha = 0.1;
             const repulsion = 15;
             const attraction = 0.02;
@@ -292,17 +322,17 @@
                 for (let j = i + 1; j < nodes.length; j++) {
                     const nodeA = nodes[i];
                     const nodeB = nodes[j];
-                    
+
                     const dx = nodeA.x - nodeB.x;
                     const dy = nodeA.y - nodeB.y;
                     const dz = nodeA.z - nodeB.z;
                     const distance = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
-                    
+
                     const force = repulsion / (distance * distance);
                     const fx = (dx / distance) * force;
                     const fy = (dy / distance) * force;
                     const fz = (dz / distance) * force;
-                    
+
                     nodeA.fx += fx;
                     nodeA.fy += fy;
                     nodeA.fz += fz;
@@ -318,12 +348,12 @@
                 const dy = edge.target.y - edge.source.y;
                 const dz = edge.target.z - edge.source.z;
                 const distance = Math.sqrt(dx*dx + dy*dy + dz*dz) || 0.1;
-                
+
                 const force = attraction * distance * edge.weight;
                 const fx = (dx / distance) * force;
                 const fy = (dy / distance) * force;
                 const fz = (dz / distance) * force;
-                
+
                 edge.source.fx += fx;
                 edge.source.fy += fy;
                 edge.source.fz += fz;
@@ -343,7 +373,7 @@
             });
         }
 
-        // Mouse interaction
+        // ---------- Mouse interaction ----------
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         const tooltip = document.getElementById('tooltip');
@@ -361,7 +391,7 @@
             if (intersects.length > 0) {
                 const intersect = intersects[0];
                 const nodeData = intersect.object.userData.nodeData;
-                
+
                 tooltip.style.display = 'block';
                 tooltip.style.left = event.clientX + 10 + 'px';
                 tooltip.style.top = event.clientY + 10 + 'px';
@@ -372,16 +402,16 @@
                     ${nodeData.label}<br>
                     <small style="color: #888;">Click to view Lean code${hasSimulation}</small>
                 `;
-                
+
                 // Highlight node
                 intersect.object.material.emissive.setHex(0x444444);
-                
+
                 // Change cursor to pointer
                 document.body.style.cursor = 'pointer';
             } else {
                 tooltip.style.display = 'none';
                 document.body.style.cursor = 'default';
-                
+
                 // Reset all node highlights
                 nodeObjects.forEach(obj => {
                     const baseColor = obj.material.color.getHex();
@@ -403,53 +433,64 @@
             }
         }
 
-        function showCodeModal(nodeData) {
-            const agentType = nodeData.agent.replace('-Agent', '');
+        async function showCodeModal(nodeData) {
+            // Attempt to recover the full entry if simulation_results was not carried over
+            const full = (nodeData && nodeData.simulation_results)
+                ? nodeData
+                : (ENTRY_BY_NODE_ID.get(nodeData.id) ? {
+                    ...nodeData,
+                    simulation_results: ENTRY_BY_NODE_ID.get(nodeData.id).simulation_results
+                  } : nodeData);
+
+            const agentType = (full.agent || '').replace('-Agent', '');
 
             let modalHTML = `
-                <div class="modal-title">${nodeData.label}</div>
-                <div class="agent-type">Agent: ${nodeData.agent} | Session: ${nodeData.timestamp}</div>
+                <div class="modal-title">${full.label}</div>
+                <div class="agent-type">Agent: ${full.agent} | Session: ${full.timestamp || ''}</div>
                 <strong>Lean 4 Code:</strong>
-                <pre><code>${nodeData.code}</code></pre>
+                <pre><code>${escapeHtml(full.code)}</code></pre>
             `;
 
             // Add simulation results if they exist
-            if (nodeData.simulation_results) {
+            if (full.simulation_results) {
+                const sim = full.simulation_results;
                 modalHTML += `
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
                         <strong style="color: #4fc3f7;">🧪 Simulation Results</strong>
-                        <p style="color: #ccc; margin: 8px 0;">${nodeData.simulation_results.simulation_code.description}</p>
+                        <p style="color: #ccc; margin: 8px 0;">${escapeHtml(sim.simulation_code?.description || 'Simulation details')}</p>
                 `;
 
                 // Add simulation images
-                if (nodeData.simulation_results.images && nodeData.simulation_results.images.length > 0) {
+                if (Array.isArray(sim.images) && sim.images.length > 0) {
                     modalHTML += '<div style="margin: 15px 0;"><strong>Visualizations:</strong></div>';
-                    nodeData.simulation_results.images.forEach((image, index) => {
+                    sim.images.forEach((image) => {
+                        const src = resolveSimAsset(image.path);
+                        const alt = image.description || '';
                         modalHTML += `
                             <div style="margin: 10px 0;">
-                                <img src="${image.path}" alt="${image.description}"
+                                <img src="${src}" alt="${escapeHtml(alt)}"
                                      style="max-width: 100%; height: auto; border: 1px solid #444; border-radius: 4px;">
-                                <p style="color: #888; font-size: 12px; margin: 5px 0;"><em>${image.description}</em></p>
+                                <p style="color: #888; font-size: 12px; margin: 5px 0;"><em>${escapeHtml(alt)}</em></p>
                             </div>
                         `;
                     });
                 }
 
                 // Add simulation code details
-                if (nodeData.simulation_results.simulation_code) {
-                    const simCode = nodeData.simulation_results.simulation_code;
+                if (sim.simulation_code) {
+                    const simCode = sim.simulation_code;
                     modalHTML += `
                         <div style="margin: 15px 0;">
                             <strong>Simulation Code:</strong>
                             <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin: 8px 0; border: 1px solid #333;">
-                                <div style="color: #4fc3f7; margin-bottom: 8px;">📁 ${simCode.file_path}</div>
-                                <div style="color: #88c999; margin-bottom: 8px;">Language: ${simCode.language}</div>
+                                <div style="color: #4fc3f7; margin-bottom: 8px;">📁 ${escapeHtml(simCode.file_path || '')}</div>
+                                <div style="color: #88c999; margin-bottom: 8px;">Language: ${escapeHtml(simCode.language || '')}</div>
                     `;
 
-                    if (simCode.key_features) {
+                    if (Array.isArray(simCode.key_features) && simCode.key_features.length > 0) {
                         modalHTML += '<div style="color: #ccc; font-size: 13px;"><strong>Key Features:</strong><ul style="margin: 5px 0; padding-left: 20px;">';
                         simCode.key_features.forEach(feature => {
-                            modalHTML += `<li>${feature}</li>`;
+                            modalHTML += `<li>${escapeHtml(feature)}</li>`;
                         });
                         modalHTML += '</ul></div>';
                     }
@@ -458,8 +499,8 @@
                 }
 
                 // Add execution results
-                if (nodeData.simulation_results.execution_results) {
-                    const results = nodeData.simulation_results.execution_results;
+                if (sim.execution_results && typeof sim.execution_results === 'object') {
+                    const results = sim.execution_results;
                     modalHTML += `
                         <div style="margin: 15px 0;">
                             <strong>Execution Results:</strong>
@@ -468,7 +509,7 @@
 
                     Object.entries(results).forEach(([key, value]) => {
                         const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        modalHTML += `<div style="margin: 3px 0;"><span style="color: #88c999;">${displayKey}:</span> ${value}</div>`;
+                        modalHTML += `<div style="margin: 3px 0;"><span style="color: #88c999;">${escapeHtml(displayKey)}:</span> ${escapeHtml(String(value))}</div>`;
                     });
 
                     modalHTML += '</div></div>';
@@ -486,7 +527,7 @@
             codeModal.style.display = 'none';
         }
 
-        // Event listeners
+        // ---------- Event listeners ----------
         window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('click', onMouseClick);
         closeModal.addEventListener('click', hideCodeModal);
@@ -498,12 +539,12 @@
             }
         });
 
-        // Animation loop
+        // ---------- Animation loop ----------
         function animate() {
             requestAnimationFrame(animate);
-            
+
             updatePhysics();
-            
+
             // Update visual positions
             nodeObjects.forEach((obj, index) => {
                 if (nodes[index]) {
@@ -528,7 +569,7 @@
             renderer.render(scene, camera);
         }
 
-        // Handle window resize
+        // ---------- Handle window resize ----------
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -538,7 +579,7 @@
         // Set initial camera position
         camera.position.set(0, 0, 20);
 
-        // Initialize
+        // ---------- Initialize ----------
         loadLeanData();
         animate();
     </script>
