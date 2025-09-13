@@ -364,6 +364,8 @@
                 if (response.ok) {
                     leanData = await response.json();
                     console.log('Loaded ' + leanData.length + ' Lean code entries from JSON file');
+                    console.log('First entry from JSON:', leanData[0]);
+                    console.log('First entry has simulation_results?', !!leanData[0]?.simulation_results);
                 } else {
                     throw new Error('Failed to fetch JSON file');
                 }
@@ -371,6 +373,8 @@
                 console.log('Failed to load JSON, using embedded data:', error.message);
                 leanData = embeddedLeanData;
                 console.log('Using ' + leanData.length + ' embedded entries');
+                console.log('First embedded entry:', leanData[0]);
+                console.log('First embedded entry has simulation_results?', !!leanData[0]?.simulation_results);
             }
             
             // Always add sample entries for new agent types to demonstrate legend
@@ -399,10 +403,17 @@
             for (var i = 0; i < newAgentSamples.length; i++) {
                 leanData.push(newAgentSamples[i]);
             }
-            
+
             console.log('Final dataset has ' + leanData.length + ' total entries');
             console.log('First few entries:', leanData.slice(0, 3));
             console.log('Last few entries:', leanData.slice(-3));
+
+            // DEBUG: Check which entries have simulation_results
+            leanData.forEach((entry, index) => {
+                if (entry.simulation_results) {
+                    console.log(`Entry ${index} (${entry.agent}) has simulation_results`);
+                }
+            });
             createGraphFromLeanData();
         }
 
@@ -725,21 +736,7 @@
 
                 modalHTML += '</div>';
             } else {
-                console.log('No simulation_results found');
-                // TEMPORARY DEBUG: Force show test simulation section for MeasureTheory-Agent
-                if (nodeData.agent === 'MeasureTheory-Agent') {
-                    console.log('Adding test simulation section for MeasureTheory-Agent');
-                    modalHTML += `
-                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #444;">
-                            <strong style="color: #4fc3f7;">🧪 DEBUG: Test Simulation Results</strong>
-                            <p style="color: #ccc; margin: 8px 0;">This is a test simulation section to check if HTML rendering works.</p>
-                            <div style="margin: 15px 0;"><strong>Test Visualizations:</strong></div>
-                            <div style="background: #333; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                                <p style="color: #ccc;">Test simulation content would appear here.</p>
-                            </div>
-                        </div>
-                    `;
-                }
+                console.log('No simulation_results found for:', nodeData.agent, nodeData.natural_language_question);
             }
 
             console.log('Final modalHTML:', modalHTML);
