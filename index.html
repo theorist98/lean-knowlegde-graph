@@ -359,6 +359,14 @@
 
         // Load Lean data
         async function loadLeanData() {
+            // TEMPORARY: Force use embedded data to test simulation_results
+            console.log('FORCING embedded data to test simulation_results');
+            leanData = embeddedLeanData;
+            console.log('Using ' + leanData.length + ' embedded entries');
+            console.log('First embedded entry:', leanData[0]);
+            console.log('First embedded entry has simulation_results?', !!leanData[0]?.simulation_results);
+
+            /* COMMENTED OUT FOR TESTING
             try {
                 const response = await fetch('./public/extracted_lean_questions.json');
                 if (response.ok) {
@@ -376,6 +384,7 @@
                 console.log('First embedded entry:', leanData[0]);
                 console.log('First embedded entry has simulation_results?', !!leanData[0]?.simulation_results);
             }
+            */
             
             // Always add sample entries for new agent types to demonstrate legend
             var newAgentSamples = [
