@@ -1,0 +1,5 @@
+section,area,length,velocity,velocities,mass_flow,conservation_ratio
+1,10,5,2,"[2, 2, 2, 2, 2]",30,0.5
+2,5,3,4,"[4, 4, 4]",36,0.6
+3,2,2,10,"[10, 10]",60,1.0
+4,8,4,2,"[2, 2, 2, 2]",24,0.4

@@ -1,0 +1,13 @@
+flow_name,description,density,velocities,velocity_sum,avg_velocity,max_velocity,min_velocity,velocity_range,mass_flow_rate,flow_segments
+Uniform Flow 1,Constant velocity profile,3,"[5, 5, 5, 5]",20,5.0,5,5,0,60,4
+Uniform Flow 2,Different uniform conditions,4,"[2, 2, 2, 2, 2]",10,2.0,2,2,0,40,5
+Accelerating Flow,Velocity increases along flow,2,"[1, 2, 3, 4, 5]",15,3.0,5,1,4,30,5
+Decelerating Flow,Velocity decreases along flow,3,"[5, 4, 3, 2, 1]",15,3.0,5,1,4,45,5
+High Density Flow,"Dense fluid, moderate velocity",10,"[2, 3, 4]",9,3.0,4,2,2,90,3
+Low Density Flow,"Light fluid, high velocity",1,"[10, 15, 20]",45,15.0,20,10,10,45,3
+Narrow Pipe,High velocity through constriction,2,"[8, 10, 12]",30,10.0,12,8,4,60,3
+Wide Pipe,Low velocity through expansion,2,"[2, 3, 4]",9,3.0,4,2,2,18,3
+Compressible 1,Compressible flow scenario 1,5,"[3, 4, 5, 6]",18,4.5,6,3,3,90,4
+Compressible 2,Compressible flow scenario 2,5,"[6, 5, 4, 3]",18,4.5,6,3,3,90,4
+Turbulent Flow,Variable velocity profile,4,"[1, 3, 2, 4, 2, 3]",15,2.5,4,1,3,60,6
+Laminar Flow,Smooth velocity profile,3,"[2, 3, 4, 3, 2]",14,2.8,4,2,2,42,5
