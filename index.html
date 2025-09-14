@@ -364,34 +364,44 @@
                 "natural_language_question": "What is the measure theory theorem expectation_example?",
                 "lean_code": "structure DiscreteRandomVariable where\n  sampleSpace : Nat\n  outcomeProbabilities : List Nat\ndef expectation (rv : DiscreteRandomVariable) : Nat :=\n  List.sum rv.outcomeProbabilities / rv.sampleSpace\ntheorem expectation_example : expectation <10, [1, 2, 3, 4]> = 10 := by simp",
                 "simulation_results": {
-                    "description": "Discrete random variable expectation calculation and Monte Carlo validation. The Lean theorem claims expectation(<10, [1,2,3,4]>) = 10, but the direct calculation gives sum([1,2,3,4]) / 10 = 1. The simulation provides probabilistic interpretation where outcomes 0,1,2,3 have weights [1,2,3,4] respectively, giving theoretical expectation 2.0. Empirical validation with 10,000 samples confirms convergence to the probabilistic expectation.",
-                    "key_findings": [
-                        "Lean calculation: sum([1,2,3,4]) // 10 = 1 (integer division)",
-                        "Theorem claims: expectation = 10 (potential semantic difference)",
-                        "Probabilistic expectation: E[X] = 2.0 (outcomes weighted by probabilities)",
-                        "Empirical convergence confirms probabilistic interpretation",
-                        "Generated 3 visualizations showing distribution, convergence, and histogram"
-                    ],
-                    "python_file": "expectation_example_simulation.py",
                     "images": [
                         {
                             "filename": "expectation_example_distribution.png",
-                            "description": "Discrete probability distribution showing outcomes 0-3 with probabilities proportional to weights [1,2,3,4], and comparison of theoretical vs empirical frequencies from 10,000 samples"
+                            "description": "Discrete probability distribution showing outcomes 0-3 with probabilities proportional to weights [1,2,3,4], and comparison of theoretical vs empirical frequencies from 10,000 samples",
+                            "path": "public/simulations/expectation_example_distribution.png"
                         },
                         {
                             "filename": "expectation_example_convergence.png",
-                            "description": "Convergence of sample mean to theoretical expectation (2.0) demonstrating Law of Large Numbers, with 95% confidence bounds and reference lines for both Lean calculation (1) and theoretical expectation"
+                            "description": "Convergence of sample mean to theoretical expectation (2.0) demonstrating Law of Large Numbers, with 95% confidence bounds and reference lines for both Lean calculation (1) and theoretical expectation",
+                            "path": "public/simulations/expectation_example_convergence.png"
                         },
                         {
                             "filename": "expectation_example_histogram.png",
-                            "description": "Sample distribution histogram overlaid with theoretical probabilities, showing empirical mean (2.003) vs theoretical mean (2.000) with excellent agreement"
+                            "description": "Sample distribution histogram overlaid with theoretical probabilities, showing empirical mean (2.003) vs theoretical mean (2.000) with excellent agreement",
+                            "path": "public/simulations/expectation_example_histogram.png"
                         }
                     ],
-                    "data_files": [
-                        "expectation_example_samples.csv",
-                        "expectation_example_frequencies.csv",
-                        "expectation_example_statistics.csv"
-                    ]
+                    "simulation_code": {
+                        "language": "python",
+                        "file_path": "public/simulations/expectation_example_simulation.py",
+                        "description": "Monte Carlo simulation demonstrating the Lean expectation_example theorem. Analyzes discrete random variable expectation calculation with probabilistic interpretation.",
+                        "key_features": [
+                            "Mirrors Lean DiscreteRandomVariable structure and expectation function in Python",
+                            "Verifies expectation_example theorem: expectation(<10, [1, 2, 3, 4]>) = 10",
+                            "Discovers discrepancy: direct calculation gives 1 but theorem claims 10",
+                            "Provides probabilistic interpretation with theoretical expectation 2.0",
+                            "Demonstrates Law of Large Numbers with 10,000 sample convergence"
+                        ]
+                    },
+                    "statistical_results": {
+                        "theorem_verification": "expectation(<10, [1, 2, 3, 4]>) = 10 (theorem claim vs calculation discrepancy)",
+                        "lean_calculation": "sum([1,2,3,4]) // 10 = 1 (integer division)",
+                        "probabilistic_expectation": "E[X] = 2.0 (outcomes weighted by probabilities)",
+                        "empirical_mean": "≈2.003 (matches theoretical probabilistic expectation)",
+                        "convergence_error": "≈0.003 (excellent agreement with probabilistic interpretation)",
+                        "total_simulated_samples": "10,000",
+                        "csv_exports": "expectation_example_samples.csv, expectation_example_frequencies.csv, expectation_example_statistics.csv"
+                    }
                 }
             },
             {
