@@ -196,5 +196,50 @@
     "session_timestamp": "2025-09-09 09:59:35",
     "natural_language_question": "What is the dynamical systems theorem rotation_zero?",
     "lean_code": "structure CircularMotion where\n  steps : Nat → Nat\ndef rotateAround (m : CircularMotion) (pos : Nat) (n : Nat) : Nat := \n  match n with \n  | 0 => pos \n  | Nat.succ k => rotateAround m (m.steps pos) k\ntheorem rotation_zero (m : CircularMotion) (pos : Nat) : rotateAround m pos 0 = pos := by rfl\ntheorem rotation_one (m : CircularMotion) (pos : Nat) : rotateAround m pos 1 = m.steps pos := by rfl"
+  },
+  {
+    "agent": "NuclearPhysics-Agent",
+    "session_timestamp": "2025-09-12 23:25:00",
+    "natural_language_question": "What is a nuclear decay theorem?",
+    "lean_code": "structure RadioactiveDecay where\n  halfLife : Nat\n  initialAmount : Nat\ndef decayAmount (rd : RadioactiveDecay) (time : Nat) : Nat := rd.initialAmount / (2 ^ (time / rd.halfLife))\ntheorem decay_at_zero : decayAmount ⟨10, 100⟩ 0 = 100 := by rfl",
+    "simulation_results": {
+      "images": [
+        {
+          "filename": "nuclear_decay_comparison.png",
+          "description": "Step curve comparison showing Lean decayAmount (Nat arithmetic) vs Monte-Carlo mean with 5-95% confidence band over time",
+          "path": "public/simulations/nuclear_decay_comparison.png"
+        },
+        {
+          "filename": "nuclear_decay_distribution.png",
+          "description": "Distribution histogram of survivors at t=30 (3 checkpoints) showing stochastic variation around theoretical values",
+          "path": "public/simulations/nuclear_decay_distribution.png"
+        },
+        {
+          "filename": "nuclear_decay_convergence.png",
+          "description": "Law of Large Numbers demonstration showing running mean convergence to real expectation at t=50",
+          "path": "public/simulations/nuclear_decay_convergence.png"
+        }
+      ],
+      "simulation_code": {
+        "language": "python",
+        "file_path": "public/simulations/nuclear_decay.py",
+        "description": "Monte Carlo simulation demonstrating the Lean radioactive decay theorem. Implements stochastic decay process with checkpoint-based halving to show difference between deterministic Lean calculation and probabilistic reality.",
+        "key_features": [
+          "Mirrors Lean RadioactiveDecay structure and decayAmount function in Python",
+          "Implements stochastic model with binomial survival at half-life checkpoints",
+          "Demonstrates difference between Lean Nat arithmetic and real expectations",
+          "Shows Law of Large Numbers convergence with 5000 Monte Carlo trials",
+          "Generates three complementary visualizations of decay dynamics"
+        ]
+      },
+      "execution_results": {
+        "theorem_instance": "decayAmount(<10,100>, 0) = 100 (verified)",
+        "simulation_trials": 5000,
+        "time_range": "0 to 100 time units",
+        "half_life": "10 time units",
+        "initial_amount": "100 atoms",
+        "csv_export": "radioactive_decay_summary.csv"
+      }
+    }
   }
 ]
