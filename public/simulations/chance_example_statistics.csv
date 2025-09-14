@@ -1,0 +1,2 @@
+theoretical_probability,final_convergence_estimate,convergence_error,theoretical_mean_successes,empirical_mean_successes,theoretical_std_successes,empirical_std_successes,trials_for_convergence,binomial_experiments,trials_per_experiment
+0.25,0.2559,0.005900000000000016,5.0,5.062,1.9364916731037085,1.9220187303978076,10000,1000,20
