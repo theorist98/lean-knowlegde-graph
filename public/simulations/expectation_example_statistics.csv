@@ -1,0 +1,2 @@
+lean_sampleSpace,lean_outcomeProbabilities,lean_expectation_calc,lean_theorem_claim,probabilistic_expectation,empirical_mean,empirical_std,theoretical_std,n_samples,convergence_error
+10,"[1, 2, 3, 4]",1,10,2.0,1.9878,1.0087869745392235,1.0,10000,0.012199999999999989
