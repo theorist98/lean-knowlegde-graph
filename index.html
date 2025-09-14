@@ -395,10 +395,93 @@
                     "lean_code": "structure RandomWalk where\\n  steps : List Int\\n  probability : Nat → Nat\\ndef walkStep (rw : RandomWalk) (n : Nat) : Int := rw.steps.get? n |>.getD 0\\ntheorem walk_starts_zero : walkStep ⟨[0, 1, -1, 2], fun _ => 1⟩ 0 = 0 := by rfl"
                 },
                 {
-                    "agent": "FluidDynamics-Agent", 
+                    "agent": "FluidDynamics-Agent",
                     "session_timestamp": "2025-09-12 23:25:00",
                     "natural_language_question": "What is a fluid flow conservation theorem?",
                     "lean_code": "structure FluidFlow where\\n  velocity : List Nat\\n  density : Nat\\ndef massFlow (f : FluidFlow) : Nat := f.density * f.velocity.sum\\ntheorem conservation_example : massFlow ⟨[1, 2, 3], 2⟩ = 12 := by rfl"
+                },
+                {
+                    "agent": "MeasureTheory-Agent-Test",
+                    "session_timestamp": "2025-09-09 09:34:54",
+                    "natural_language_question": "What is the measure theory theorem event_prob_example? (TEST COPY)",
+                    "lean_code": "structure SimpleEvent where\n  total_outcomes : Nat\n  successful_outcomes : Nat\ndef event_probability (e : SimpleEvent) : Nat × Nat := (e.successful_outcomes, e.total_outcomes)\ntheorem event_prob_example : event_probability ⟨20, 8⟩ = (8, 20) := by rfl",
+                    "simulation_results": {
+                        "images": [
+                            {
+                                "filename": "convergence_plot.png",
+                                "description": "Shows convergence of running probability estimate to theoretical value 8/20 = 0.4 over 5000 trials",
+                                "path": "public/simulations/convergence_plot.png"
+                            },
+                            {
+                                "filename": "sampling_distribution.png",
+                                "description": "Histogram showing sampling distribution of probability estimates with 20 draws per experiment, centered around theoretical 0.4",
+                                "path": "public/simulations/sampling_distribution.png"
+                            }
+                        ],
+                        "simulation_code": {
+                            "language": "python",
+                            "file_path": "public/simulations/event_prob_example_simulation.py",
+                            "description": "Monte Carlo simulation demonstrating the Lean theorem event_prob_example. Mirrors the Lean definitions in Python and generates convergence plots and sampling distributions to visualize the theoretical probability 8/20 = 0.4",
+                            "key_features": [
+                                "Mirrors Lean SimpleEvent structure and event_probability function in Python",
+                                "Demonstrates Law of Large Numbers with convergence plot",
+                                "Shows sampling distribution for n=20 (matching Lean theorem parameters)",
+                                "Includes accuracy analysis across different sample sizes",
+                                "Generates reproducible results with seeded random number generator"
+                            ]
+                        },
+                        "execution_results": {
+                            "theoretical_probability": "8/20 = 2/5 = 0.4000",
+                            "convergence_trials": 5000,
+                            "sampling_experiments": 10000,
+                            "accuracy_table_generated": "event_prob_example_accuracy.csv"
+                        }
+                    }
+                },
+                {
+                    "agent": "NuclearPhysics-Agent",
+                    "session_timestamp": "2025-09-12 23:25:00",
+                    "natural_language_question": "What is a nuclear decay theorem?",
+                    "lean_code": "structure RadioactiveDecay where\\n  halfLife : Nat\\n  initialAmount : Nat\\ndef decayAmount (rd : RadioactiveDecay) (time : Nat) : Nat := rd.initialAmount / (2 ^ (time / rd.halfLife))\\ntheorem decay_at_zero : decayAmount ⟨10, 100⟩ 0 = 100 := by rfl",
+                    "simulation_results": {
+                        "images": [
+                            {
+                                "filename": "nuclear_decay_comparison.png",
+                                "description": "Step curve comparison showing Lean decayAmount (Nat arithmetic) vs Monte-Carlo mean with 5-95% confidence band over time",
+                                "path": "public/simulations/nuclear_decay_comparison.png"
+                            },
+                            {
+                                "filename": "nuclear_decay_distribution.png",
+                                "description": "Distribution histogram of survivors at t=30 (3 checkpoints) showing stochastic variation around theoretical values",
+                                "path": "public/simulations/nuclear_decay_distribution.png"
+                            },
+                            {
+                                "filename": "nuclear_decay_convergence.png",
+                                "description": "Law of Large Numbers demonstration showing running mean convergence to real expectation at t=50",
+                                "path": "public/simulations/nuclear_decay_convergence.png"
+                            }
+                        ],
+                        "simulation_code": {
+                            "language": "python",
+                            "file_path": "public/simulations/nuclear_decay.py",
+                            "description": "Monte Carlo simulation demonstrating the Lean radioactive decay theorem. Implements stochastic decay process with checkpoint-based halving to show difference between deterministic Lean calculation and probabilistic reality.",
+                            "key_features": [
+                                "Mirrors Lean RadioactiveDecay structure and decayAmount function in Python",
+                                "Implements stochastic model with binomial survival at half-life checkpoints",
+                                "Demonstrates difference between Lean Nat arithmetic and real expectations",
+                                "Shows Law of Large Numbers convergence with 5000 Monte Carlo trials",
+                                "Generates three complementary visualizations of decay dynamics"
+                            ]
+                        },
+                        "execution_results": {
+                            "theorem_instance": "decayAmount(<10,100>, 0) = 100 (verified)",
+                            "simulation_trials": 5000,
+                            "time_range": "0 to 100 time units",
+                            "half_life": "10 time units",
+                            "initial_amount": "100 atoms",
+                            "csv_export": "radioactive_decay_summary.csv"
+                        }
+                    }
                 }
             ];
             
