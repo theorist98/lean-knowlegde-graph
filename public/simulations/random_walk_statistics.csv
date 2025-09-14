@@ -1,0 +1,2 @@
+n_walks,n_steps,mean_final_position,std_final_position,min_final_position,max_final_position,theoretical_variance,empirical_variance
+1000,100,-0.284,10.081633994546717,-30.0,28.0,100,101.639344
